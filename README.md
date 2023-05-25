@@ -1,2 +1,2 @@
-# hidden-treasure-problem
-Hidden Treasure Problem with Genethic Algorithm Solution
+# Hidden Treasure Problem with Genethic Algorithm Solution
+
