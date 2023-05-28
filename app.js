@@ -10,8 +10,7 @@ const populationFitnessScores = [];
 const populationFitnessManhattan = [];
 // const iterationSize = 50
 const crossingOverRatio = 0.7;
-// const mutationRatio = 0.01
-// const bitSize = 6
+const mutationRatio = 0.01
 
 // Oyun alanı matris olarak oluşturulur
 const gameArea = (areaSize, trophySize, trophyCoordinates) => {
@@ -81,17 +80,35 @@ const calculateFitnessScore = (
   }
 };
 
-function crossingOver(crossingOverRatio, populationData, trophyCoordinates) {
+const calculateOneMemberFitnessScore = (populationData,
+  trophyCoordinates, index) => {
+  // X ve Y mesafelerinin mutlak değer farkları alınır
+  let dx = Math.abs(trophyCoordinates[0].x - populationData[index].x);
+  let dy = Math.abs(trophyCoordinates[0].y - populationData[index].y);
+
+  // X ve Y mesafelerinin mutlak değer toplamı alınır, bu alınan toplam populationFitnessManhattan dizisine eklenir
+  let distanceMan = dx + dy;
+  return distanceMan;
+}
+
+function crossingOver(crossingOverRatio, populationData) {
   /*
-        [TR] gerekli hesaplamalar için değişkenler tanımlanır ve kaç adet 
-        çaprazlama yapılacağı, çaprazlamanın başlayacağı bitin hangisi 
-        olacağı belirlenir.
-    */
+    [TR] gerekli hesaplamalar için değişkenler tanımlanır ve kaç adet 
+    çaprazlama yapılacağı, çaprazlamanın başlayacağı bitin hangisi 
+    olacağı belirlenir.
+  */
 
   let arrSum = 0;
   let arrRouletteRatio = [];
   let tempRatio = [];
   let newRatio = 0;
+
+  /*
+    [TR] Üyelerin sayılarının büyüklüklerine göre yüzdelik oranlarının
+    belirlendiği coding işlemi yapılır. Burada üyelerin hangi aralıklarda
+    yer alacağı belirlenir. Örneğin 1 - 2 - 3 - 4 - 5 sayıları yaklaşık
+    %6.66 - %13.32 - %19,98 - %26,64 - %33,3 yüzdelik oranlarına sahip olur.
+  */
 
   for (let i = 0; i < populationData.length; i++) {
     arrSum += populationData[i].manhattanDistance;
@@ -109,7 +126,6 @@ function crossingOver(crossingOverRatio, populationData, trophyCoordinates) {
     tempRatio[i] = arrSum - populationData[i].manhattanDistance;
   }
   
-  console.log(tempRatio);
   for (let i = 0; i < tempRatio.length; i++) {
     arrRouletteRatio.push(
       Math.floor((tempRatio[i] * 100) / newRatio)
@@ -131,97 +147,55 @@ function crossingOver(crossingOverRatio, populationData, trophyCoordinates) {
     []
   );
 
-  console.log(arrRouletteRatio, transformedArray);
+  console.log("Oranlar:",arrRouletteRatio,"\nRulet oranı:", transformedArray);
   let randomMembers = [];
 
-  let memberSize = Math.floor(populationData.length * crossingOverRatio);
-  console.log(memberSize);
+  /*
+    [TR] Oluşturulan rulet oranlarına göre rastgele sayılar seçilerek
+    hangi üyelerin seçileceği kararlaştırılır ve randomMembers arrayine
+    eklenir.
+  */
+
+
+  let memberSize = Math.floor(populationData.length * crossingOverRatio) * 2;
+
   for (let i = 0; i < memberSize; i++) {
-      Math.floor((Math.random() * 100) + 1);
-
+    let a = Math.floor((Math.random() * 99) + 1);
+    const index = transformedArray.findIndex(element => element > a);
+    randomMembers.push(index);
   }
-  // let arrRouletteRatioSum = 0
+  console.log(randomMembers);
 
-  // let crossingOverNumber = Math.round(arr.length * crossingOverRatio)
 
-  // if (crossingOverNumber % 2 == 1) {
-  //     crossingOverNumber += 1
-  // }
+  /*
+      [TR] Çaprazlama için seçilmiş üyeler karşılıklı olarak seçilir.
+      ve çaprazlama işlemi gerçekleşir. Örneğin 0,1,2,3 numaralı
+      üyeler için 0-3 ve 1-2 çarpazlaması yapılır.
+  */
+  for (let i = 0; i < randomMembers.length / 2; i++) {
+      let temp = populationData[randomMembers[i]].x
+      let temp2 =populationData[randomMembers[randomMembers.length - i - 1]].x
 
-  // arr.forEach((element) => {
-  //     arrSum += parseInt(element, 2)
-  // })
+      let tempAvg = (temp + temp2) / 2;
+      populationData[randomMembers[i]].x = populationData[randomMembers[randomMembers.length - i - 1]].x = tempAvg;
+  }
 
-  // let rouletteRatio = 100 / arrSum
+}
 
-  // /*
-  //     [TR] Üyelerin sayılarının büyüklüklerine göre yüzdelik oranlarının
-  //     belirlendiği coding işlemi yapılır. Burada üyelerin hangi aralıklarda
-  //     yer alacağı belirlenir. Örneğin 1 - 2 - 3 - 4 - 5 sayıları yaklaşık
-  //     %6.66 - %13.32 - %19,98 - %26,64 - %33,3 yüzdelik oranlarına sahip olur.
-  // */
-  // for (let i = 0; i < arr.length; i++) {
-  //     let memberChance = parseInt(parseInt(arr[i], 2) * rouletteRatio)
-  //     if (memberChance == 0) {
-  //         memberChance = 1
-  //     }
-  //     arrRouletteRatio.push(arrRouletteRatioSum + memberChance)
-  //     arrRouletteRatioSum += memberChance
-  // }
-
-  // /*
-  //     [TR] Oluşturulan rulet oranlarına göre rastgele sayılar seçilerek
-  //     hangi üyelerin seçileceği kararlaştırılır ve randomMembers arrayine
-  //     eklenir.
-  // */
-  // for (let i = 0; i < crossingOverNumber; i++) {
-  //     let randomNumber = Math.floor(Math.random() * 101)
-  //     for (let j = 0; j < arr.length; j++) {
-  //         if (
-  //             (randomNumber < arrRouletteRatio[j + 1] &&
-  //                 randomNumber > arrRouletteRatio[j] &&
-  //                 j < arr.length - 1) ||
-  //             randomNumber == arrRouletteRatio[j]
-  //         ) {
-  //             randomMembers.push(j)
-  //             break
-  //         } else if (
-  //             j == arr.length - 1 &&
-  //             randomNumber >= arrRouletteRatio[arr.length - 1]
-  //         ) {
-  //             randomMembers.push(arr.length - 1)
-  //             break
-  //         } else if (
-  //             j == arr.length - 1 &&
-  //             randomNumber < arrRouletteRatio[0]
-  //         ) {
-  //             randomMembers.push(0)
-  //             break
-  //         }
-  //     }
-  // }
-
-  // /*
-  //     [TR] Çaprazlama için seçilmiş üyeler karşılıklı olarak seçilir.
-  //     ve çaprazlama işlemi gerçekleşir. Örneğin 0,1,2,3 numaralı
-  //     üyeler için 0-3 ve 1-2 çarpazlaması yapılır.
-  // */
-  // for (let i = 0; i < randomMembers.length / 2; i++) {
-  //     let temp = arr[randomMembers[i]].substring(randomCrossPoint)
-  //     let temp2 =
-  //         arr[randomMembers[randomMembers.length - i - 1]].substring(
-  //             randomCrossPoint
-  //         )
-
-  //     let tempBeginning = arr[randomMembers[i]].substring(0, randomCrossPoint)
-  //     let temp2Beginning = arr[
-  //         randomMembers[randomMembers.length - i - 1]
-  //     ].substring(0, randomCrossPoint)
-
-  //     arr[randomMembers[i]] = tempBeginning + temp2
-  //     arr[randomMembers[randomMembers.length - i - 1]] = temp2Beginning + temp
-  // }
-  // return arr
+function mutation(mutationRatio, populationData, areaSize) {
+  let mutationSize = Math.ceil(mutationRatio * populationData.length);
+  for (let i = 0; i < mutationSize; i++) {
+    const randomIndex = Math.floor(Math.random() * populationData.length);
+    const randomElement = populationData[randomIndex];
+    const randomCoordinate = Math.floor(Math.random() * areaSize-1)
+    const randomDirection = Math.floor(Math.random() * 2) + 1
+    if (randomDirection == 1) {
+      randomElement.x = randomCoordinate;
+      
+    } else {
+      
+    }
+  }
 }
 
 let area = gameArea(areaSize, trophySize, trophyCoordinates);
@@ -238,11 +212,29 @@ console.log("Popülasyon Verileri:", populationData);
 
 console.table(area);
 
+const minObject = populationData.reduce((min, current) => {
+  return current.manhattanDistance < min.manhattanDistance ? current : min;
+});
+
+const minIndex = populationData.findIndex(obj => obj.x === minObject.x);
+
+
 console.log(
   "En yakın mesafe:",
-  Math.min(...populationFitnessScores),
+  minObject.manhattanDistance,
   "En yakın mesafenin olduğu eleman:",
-  populationFitnessScores.indexOf(Math.min(...populationFitnessScores)) + 1
+  minIndex + 1
 );
 
-crossingOver(crossingOverRatio, populationData, trophyCoordinates);
+crossingOver(crossingOverRatio, populationData);
+
+calculateFitnessScore(
+  populationData,
+  trophyCoordinates,
+  populationSize,
+  trophySize
+);
+
+console.log(populationData);
+
+mutation(mutationRatio,populationData,areaSize);
