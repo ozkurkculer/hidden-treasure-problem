@@ -9,8 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "nodemon": "^2.0.22",
-    "phaser": "^3.60.0"
+    "nodemon": "^2.0.22"
   }
 }
