@@ -1,3 +1,16 @@
+// const express = require('express');
+// const app = express();
+
+// app.use(express.static(__dirname + '/public'));
+
+// app.get('/', function (req, res) {
+//   res.sendFile(__dirname + '/index.html');
+// });
+
+// app.listen(8080, () => {
+//   console.log('Server listening on http://localhost:8080');
+// });
+
 // Oyun alanının belirlenmesi
 const areaSize = 10;
 
@@ -6,8 +19,8 @@ const trophySize = 1;
 const trophyCoordinates = [];
 const populationSize = 3;
 const populationData = [];
-const populationFitnessScores = [];
-const populationFitnessManhattan = [];
+// const populationFitnessScores = [];
+// const populationFitnessManhattan = [];
 // const iterationSize = 50
 const crossingOverRatio = 0.7;
 const mutationRatio = 0.01
@@ -80,11 +93,10 @@ const calculateFitnessScore = (
   }
 };
 
-const calculateOneMemberFitnessScore = (populationData,
-  trophyCoordinates, index) => {
+const calculateOneMemberFitnessScore = (member, trophyCoordinates) => {
   // X ve Y mesafelerinin mutlak değer farkları alınır
-  let dx = Math.abs(trophyCoordinates[0].x - populationData[index].x);
-  let dy = Math.abs(trophyCoordinates[0].y - populationData[index].y);
+  let dx = Math.abs(trophyCoordinates[0].x - member.x);
+  let dy = Math.abs(trophyCoordinates[0].y - member.y);
 
   // X ve Y mesafelerinin mutlak değer toplamı alınır, bu alınan toplam populationFitnessManhattan dizisine eklenir
   let distanceMan = dx + dy;
@@ -165,19 +177,28 @@ function crossingOver(crossingOverRatio, populationData) {
     randomMembers.push(index);
   }
   console.log(randomMembers);
-
-
   /*
-      [TR] Çaprazlama için seçilmiş üyeler karşılıklı olarak seçilir.
-      ve çaprazlama işlemi gerçekleşir. Örneğin 0,1,2,3 numaralı
-      üyeler için 0-3 ve 1-2 çarpazlaması yapılır.
+    [TR] Çaprazlama için seçilmiş üyeler karşılıklı olarak seçilir.
+    ve çaprazlama işlemi gerçekleşir. Örneğin 0,1,2,3 numaralı
+    üyeler için 0-3 ve 1-2 çarpazlaması yapılır.
   */
-  for (let i = 0; i < randomMembers.length / 2; i++) {
+  const randomDirection = Math.floor(Math.random() * 2) + 1
+  if (randomDirection == 1) {
+    for (let i = 0; i < randomMembers.length / 2; i++) {
       let temp = populationData[randomMembers[i]].x
       let temp2 =populationData[randomMembers[randomMembers.length - i - 1]].x
 
       let tempAvg = (temp + temp2) / 2;
       populationData[randomMembers[i]].x = populationData[randomMembers[randomMembers.length - i - 1]].x = tempAvg;
+    }
+  } else {
+    for (let i = 0; i < randomMembers.length / 2; i++) {
+      let temp = populationData[randomMembers[i]].y
+      let temp2 =populationData[randomMembers[randomMembers.length - i - 1]].y
+
+      let tempAvg = (temp + temp2) / 2;
+      populationData[randomMembers[i]].y = populationData[randomMembers[randomMembers.length - i - 1]].y = tempAvg;
+    }
   }
 
 }
@@ -191,9 +212,14 @@ function mutation(mutationRatio, populationData, areaSize) {
     const randomDirection = Math.floor(Math.random() * 2) + 1
     if (randomDirection == 1) {
       randomElement.x = randomCoordinate;
-      
     } else {
-      
+      randomElement.y = randomCoordinate;
+    }
+    if (calculateOneMemberFitnessScore(randomElement, trophyCoordinates) < randomElement.manhattanDistance && randomDirection == 1) {
+      populationData[randomIndex].x = randomCoordinate;
+    }
+    else if(calculateOneMemberFitnessScore(randomElement, trophyCoordinates) < randomElement.manhattanDistance){
+      populationData[randomIndex].y = randomCoordinate;
     }
   }
 }
@@ -238,3 +264,12 @@ calculateFitnessScore(
 console.log(populationData);
 
 mutation(mutationRatio,populationData,areaSize);
+
+calculateFitnessScore(
+  populationData,
+  trophyCoordinates,
+  populationSize,
+  trophySize
+);
+
+console.log(populationData);
