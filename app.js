@@ -23,10 +23,11 @@ const populationData = [];
 // const populationFitnessManhattan = [];
 // const iterationSize = 50
 const crossingOverRatio = 0.7;
-const mutationRatio = 0.01
+const mutationRatio = 0.01;
+const iterationSize = 5;
 
 // Oyun alanı matris olarak oluşturulur
-const gameArea = (areaSize, trophySize, trophyCoordinates) => {
+const createMap = (areaSize, trophyCoordinates, trophySize) => {
   const arr = new Array(areaSize)
     .fill(" ")
     .map(() => new Array(areaSize).fill(" "));
@@ -45,10 +46,11 @@ const gameArea = (areaSize, trophySize, trophyCoordinates) => {
       continue;
     }
   }
+
   return arr;
 };
 
-const createInıtPop = (arr, populationSize, populationData) => {
+const createInitPop = (arr, populationSize, populationData) => {
   for (let i = 0; i < populationSize; i++) {
     const randomX = Math.floor(Math.random() * areaSize - 1) + 1;
     const randomY = Math.floor(Math.random() * areaSize - 1) + 1;
@@ -101,7 +103,7 @@ const calculateOneMemberFitnessScore = (member, trophyCoordinates) => {
   // X ve Y mesafelerinin mutlak değer toplamı alınır, bu alınan toplam populationFitnessManhattan dizisine eklenir
   let distanceMan = dx + dy;
   return distanceMan;
-}
+};
 
 function crossingOver(crossingOverRatio, populationData) {
   /*
@@ -127,7 +129,6 @@ function crossingOver(crossingOverRatio, populationData) {
   }
 
   for (let i = 0; i < populationData.length; i++) {
-    
     tempRatio.push(
       Math.floor((populationData[i].manhattanDistance * 100) / arrSum)
     );
@@ -137,12 +138,9 @@ function crossingOver(crossingOverRatio, populationData) {
     newRatio += arrSum - populationData[i].manhattanDistance;
     tempRatio[i] = arrSum - populationData[i].manhattanDistance;
   }
-  
+
   for (let i = 0; i < tempRatio.length; i++) {
-    arrRouletteRatio.push(
-      Math.floor((tempRatio[i] * 100) / newRatio)
-    );
-    
+    arrRouletteRatio.push(Math.floor((tempRatio[i] * 100) / newRatio));
   }
 
   let transformedArray = arrRouletteRatio.reduce(
@@ -159,7 +157,7 @@ function crossingOver(crossingOverRatio, populationData) {
     []
   );
 
-  console.log("Oranlar:",arrRouletteRatio,"\nRulet oranı:", transformedArray);
+  // console.log("Oranlar:", arrRouletteRatio, "\nRulet oranı:", transformedArray);
   let randomMembers = [];
 
   /*
@@ -168,64 +166,104 @@ function crossingOver(crossingOverRatio, populationData) {
     eklenir.
   */
 
-
   let memberSize = Math.floor(populationData.length * crossingOverRatio) * 2;
 
   for (let i = 0; i < memberSize; i++) {
-    let a = Math.floor((Math.random() * 99) + 1);
-    const index = transformedArray.findIndex(element => element > a);
+    let a = Math.floor(Math.random() * 99 + 1);
+    let index = transformedArray.findIndex((element) => element > a);
+    if (index < 0) {
+      index++;
+    }
     randomMembers.push(index);
   }
-  console.log(randomMembers);
+  console.log("Rastgele seçilen üye indexleri:", randomMembers);
   /*
     [TR] Çaprazlama için seçilmiş üyeler karşılıklı olarak seçilir.
     ve çaprazlama işlemi gerçekleşir. Örneğin 0,1,2,3 numaralı
     üyeler için 0-3 ve 1-2 çarpazlaması yapılır.
   */
-  const randomDirection = Math.floor(Math.random() * 2) + 1
+  populationData.sort((a, b) => b.manhattanDistance - a.manhattanDistance);
+
+  let largestMembers = populationData.slice(0, memberSize / 2);
+
+  const randomDirection = Math.floor(Math.random() * 2) + 1;
   if (randomDirection == 1) {
     for (let i = 0; i < randomMembers.length / 2; i++) {
-      let temp = populationData[randomMembers[i]].x
-      let temp2 =populationData[randomMembers[randomMembers.length - i - 1]].x
+      let temp = populationData[randomMembers[i]].x;
+      let temp2 = populationData[randomMembers[randomMembers.length - i - 1]].x;
 
-      let tempAvg = (temp + temp2) / 2;
-      populationData[randomMembers[i]].x = populationData[randomMembers[randomMembers.length - i - 1]].x = tempAvg;
+      let tempAvg = Math.ceil((temp + temp2) / 2);
+
+      largestMembers[i].x = tempAvg;
     }
   } else {
     for (let i = 0; i < randomMembers.length / 2; i++) {
-      let temp = populationData[randomMembers[i]].y
-      let temp2 =populationData[randomMembers[randomMembers.length - i - 1]].y
+      let temp = populationData[randomMembers[i]].y;
+      let temp2 = populationData[randomMembers[randomMembers.length - i - 1]].y;
 
-      let tempAvg = (temp + temp2) / 2;
-      populationData[randomMembers[i]].y = populationData[randomMembers[randomMembers.length - i - 1]].y = tempAvg;
+      let tempAvg = Math.ceil((temp + temp2) / 2);
+      largestMembers[i].y = tempAvg;
     }
   }
-
 }
 
 function mutation(mutationRatio, populationData, areaSize) {
   let mutationSize = Math.ceil(mutationRatio * populationData.length);
   for (let i = 0; i < mutationSize; i++) {
-    const randomIndex = Math.floor(Math.random() * populationData.length);
+    let randomIndex = Math.floor(Math.random() * populationData.length);
+    if (randomIndex < 0) {
+      randomIndex++;
+    }
     const randomElement = populationData[randomIndex];
-    const randomCoordinate = Math.floor(Math.random() * areaSize-1)
-    const randomDirection = Math.floor(Math.random() * 2) + 1
+    const randomCoordinate = Math.floor(Math.random() * areaSize - 1);
+    const randomDirection = Math.floor(Math.random() * 2) + 1;
     if (randomDirection == 1) {
       randomElement.x = randomCoordinate;
     } else {
       randomElement.y = randomCoordinate;
     }
-    if (calculateOneMemberFitnessScore(randomElement, trophyCoordinates) < randomElement.manhattanDistance && randomDirection == 1) {
+    if (
+      calculateOneMemberFitnessScore(randomElement, trophyCoordinates) <
+        randomElement.manhattanDistance &&
+      randomDirection == 1
+    ) {
+      console.log("\nMUTASYON SONUCU", randomIndex ,". ÜYE GÜNCELLENDİ\n");
       populationData[randomIndex].x = randomCoordinate;
-    }
-    else if(calculateOneMemberFitnessScore(randomElement, trophyCoordinates) < randomElement.manhattanDistance){
+    } else if (
+      calculateOneMemberFitnessScore(randomElement, trophyCoordinates) <
+      randomElement.manhattanDistance
+    ) {
+      console.log("\nMUTASYON SONUCU", randomIndex ,". ÜYE GÜNCELLENDİ\n");
       populationData[randomIndex].y = randomCoordinate;
     }
   }
 }
 
-let area = gameArea(areaSize, trophySize, trophyCoordinates);
-area = createInıtPop(area, populationSize, populationData);
+function changeTreasueLocation() {}
+
+function updateMap(arr, trophyCoordinates, populationData) {
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = 0; j < arr[i].length; j++) {
+      arr[i][j] = " ";
+    }
+  }
+
+  for (let i = 0; i < populationData.length; i++) {
+    for (let j = 0; j < arr.length; j++) {
+      for (let k = 0; k < arr[i].length; k++) {
+        if (j == populationData[i].x && k == populationData[i].y) {
+          arr[j][k] = "x";
+        }
+      }
+    }
+  }
+  arr[trophyCoordinates[0].x][trophyCoordinates[0].y] = "*";
+  return arr;
+}
+
+let area = createMap(areaSize, trophyCoordinates, trophySize);
+
+area = createInitPop(area, populationSize, populationData);
 calculateFitnessScore(
   populationData,
   trophyCoordinates,
@@ -233,17 +271,18 @@ calculateFitnessScore(
   trophySize
 );
 
-console.log("Hazine Koordinatları:", trophyCoordinates);
-console.log("Popülasyon Verileri:", populationData);
+// console.log("Hazine Koordinatları:", trophyCoordinates);
+// console.log("Popülasyon Verileri:", populationData);
+
+console.log(populationData);
 
 console.table(area);
 
-const minObject = populationData.reduce((min, current) => {
+let minObject = populationData.reduce((min, current) => {
   return current.manhattanDistance < min.manhattanDistance ? current : min;
 });
 
-const minIndex = populationData.findIndex(obj => obj.x === minObject.x);
-
+let minIndex = populationData.findIndex((obj) => obj.x === minObject.x);
 
 console.log(
   "En yakın mesafe:",
@@ -252,24 +291,42 @@ console.log(
   minIndex + 1
 );
 
-crossingOver(crossingOverRatio, populationData);
+for (let i = 0; i < iterationSize; i++) {
+  
+  crossingOver(crossingOverRatio, populationData);
 
-calculateFitnessScore(
-  populationData,
-  trophyCoordinates,
-  populationSize,
-  trophySize
-);
+  calculateFitnessScore(
+    populationData,
+    trophyCoordinates,
+    populationSize,
+    trophySize
+  );
 
-console.log(populationData);
+  mutation(mutationRatio, populationData, areaSize);
 
-mutation(mutationRatio,populationData,areaSize);
+  calculateFitnessScore(
+    populationData,
+    trophyCoordinates,
+    populationSize,
+    trophySize
+  );
 
-calculateFitnessScore(
-  populationData,
-  trophyCoordinates,
-  populationSize,
-  trophySize
-);
+  // console.log(populationData);
 
-console.log(populationData);
+  updateMap(area, trophyCoordinates, populationData);
+  console.log(populationData);
+  console.table(area);
+
+  let minObject = populationData.reduce((min, current) => {
+    return current.manhattanDistance < min.manhattanDistance ? current : min;
+  });
+
+  let minIndex = populationData.findIndex((obj) => obj.x === minObject.x);
+
+  console.log(
+    "En yakın mesafe:",
+    minObject.manhattanDistance,
+    "En yakın mesafenin olduğu eleman:",
+    minIndex + 1
+  );
+}
